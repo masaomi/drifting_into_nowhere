@@ -1,0 +1,8 @@
+
+Operator analysis
+Operator                                          Tuning   Count      Time     Time/Op  Pr(accept)  Performance suggestion
+scale(location.stdev)                             0.9     38934      1799     0.05     0.9281      high	Try setting scaleFactor to about 0.81
+swapOperator(location.rrwCategories)                      155390     3427     0.02     0.9156      high	No suggestions
+uniformInteger(location.rrwCategories)                    77943      1753     0.02     0.942       very high	
+precisionGibbsOperator                                    77733      1574     0.02     1.0         none (Gibbs operator)
+

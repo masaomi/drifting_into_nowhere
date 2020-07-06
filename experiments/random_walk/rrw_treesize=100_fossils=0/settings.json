@@ -1,0 +1,1 @@
+{"n_steps": 5000, "n_expected_leafs": 100, "total_diffusion": 2000.0, "total_drift": 0.0, "drift_density": 1.0, "drift_direction": [0.0, 1.0], "p_settle": 0.0, "max_fossil_age": 0, "movement_model": "rrw", "chain_length": 350000, "burnin": 50000, "hpd_values": [80, 95]}

@@ -19,6 +19,15 @@ from src.util import (total_drift_2_step_drift, total_diffusion_2_step_var,
                       normalize, mkpath, parse_arg)
 
 
+def getVarName(var, locals) :
+    for k,v in locals.items() :
+        if id(v) == id(var) :
+            return k
+
+p=print
+def pp(locals, s):
+    p("# %s:" % getVarName(s, locals), s)
+
 def run_experiment(n_steps, n_expected_leafs, total_drift,
                    total_diffusion, drift_density, p_settle, drift_direction,
                    chain_length, burnin, hpd_values, working_dir,
@@ -57,24 +66,37 @@ def run_experiment(n_steps, n_expected_leafs, total_drift,
     Returns:
         dict: Statistics of the experiments (different error values).
     """
+    print("# run_experiment starts")
+    l=locals
     # Ensure arrays to be np.array
     root = np.zeros(2)
+    pp(l(), drift_direction)
     drift_direction = np.asarray(drift_direction)
     min_leaves, max_leaves = 0.4 * n_expected_leafs, 2. * n_expected_leafs
 
     # Paths
     xml_path = working_dir + 'nowhere.xml'
+    pp(l(), working_dir)
 
     # Inferred parameters
     drift_direction = normalize(drift_direction)
+    p("# normalize(drift_direction):", normalize(drift_direction))
+    pp(l(), total_diffusion)
+    pp(l(), n_steps)
     step_var = total_diffusion_2_step_var(total_diffusion, n_steps)
     _step_drift = total_drift_2_step_drift(total_drift, n_steps, drift_density=drift_density)
     step_mean = _step_drift * drift_direction
+    
+    pp(l(), step_var)
+    pp(l(), _step_drift)
+    pp(l(), step_mean)
 
     # Compute birth-/death-rate from n_expected_leaves, n_steps and turnover
     eff_div_rate = np.log(n_expected_leafs) / n_steps
     birth_rate = eff_div_rate / (1 - turnover)
     death_rate = birth_rate * turnover
+    pp(l(), birth_rate)
+    pp(l(), death_rate)
 
     # b = e / (4/5) = e*5/4
     # d = b * 1/5 = e*5/4/5 = e/4
@@ -88,6 +110,8 @@ def run_experiment(n_steps, n_expected_leafs, total_drift,
             assert 0 < hpd < 100
         assert burnin < chain_length
 
+    pp(l(), movement_model)
+    pp(l(), max_fossil_age)
     valid_tree = False
     while not valid_tree:
         # Run Simulation
@@ -129,19 +153,25 @@ def run_experiment(n_steps, n_expected_leafs, total_drift,
 
     else:
 
+        p("# making xml tree starts")
         # Create an XML file as input for the BEAST analysis
         tree_simu.write_beast_xml(xml_path, chain_length, movement_model=movement_model,
                                   drift_prior_std=1.)
 
         # Run phylogeographic reconstruction in BEAST
+        p("# BEAST starts")
         run_beast(working_dir=working_dir)
 
+        p("# tree evaluating starts")
         results = evaluate(working_dir, burnin, hpd_values, root)
 
+        p("# tree stats")
         # Add statistics about simulated tree (to compare between simulation modes)
         results['observed_stdev'] = np.hypot(*np.std(tree_simu.get_leaf_locations(), axis=0))
         leafs_mean = np.mean(tree_simu.get_leaf_locations(), axis=0)
+        pp(l(), leafs_mean)
         leafs_mean_offset = leafs_mean - root
+        pp(l(), leafs_mean_offset)
         results['observed_drift_x'] = leafs_mean_offset[0]
         results['observed_drift_y'] = leafs_mean_offset[1]
         results['observed_drift_norm'] = np.hypot(*leafs_mean_offset)
@@ -149,6 +179,8 @@ def run_experiment(n_steps, n_expected_leafs, total_drift,
     # Always include tree stats
     tree_stats = tree_statistics(tree_simu)
     results.update(tree_stats)
+    p("# run_experiment ends")
+    exit()
 
     return results
 

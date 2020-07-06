@@ -3,5 +3,5 @@
 OLD_CWD=$(pwd)
 CWD=$1
 cd $CWD
-beast1 -overwrite nowhere.xml
+beast -overwrite nowhere.xml
 cd $OLD_CWD
